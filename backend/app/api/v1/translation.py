@@ -1,4 +1,5 @@
 from typing import List, Optional
+import os
 from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.orm import Session
 from app.db.base import get_db
@@ -26,8 +27,15 @@ async def translate(
     # For now, allow anonymous translations
     current_user = None
     
-    # Initialize translation service (use real OpenAI with cheap model)
-    service = TranslationService(db)
+    # Initialize translation service
+    # Use mock service if OpenAI is having issues or for testing
+    use_mock = os.getenv("USE_MOCK_TRANSLATION", "false").lower() == "true"
+    
+    if use_mock:
+        from app.services.mock_translation import MockTranslationService
+        service = MockTranslationService(db)
+    else:
+        service = TranslationService(db)
     
     # Perform translation
     result = await service.translate(
