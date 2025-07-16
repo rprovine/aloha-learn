@@ -13,7 +13,7 @@ from pydantic import AnyHttpUrl
 class Settings(BaseSettings):
     # Application
     APP_NAME: str = "Aloha Learn"
-    APP_VERSION: str = "1.0.0"
+    APP_VERSION: str = "1.0.1"
     DEBUG: bool = os.getenv("DEBUG", os.getenv("ENVIRONMENT", "development") == "development")
     
     # Database - will be set from environment
