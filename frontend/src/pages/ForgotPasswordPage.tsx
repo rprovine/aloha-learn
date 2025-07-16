@@ -18,6 +18,7 @@ const ForgotPasswordPage: React.FC = () => {
 
     try {
       const response = await api.post('/auth/forgot-password', { email });
+      console.log('Forgot password response:', response.data);
       setIsSuccess(true);
       // For demo, we get the link directly
       if (response.data.reset_link) {
@@ -41,11 +42,11 @@ const ForgotPasswordPage: React.FC = () => {
           <div className="w-16 h-16 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-4">
             <CheckCircle className="w-8 h-8 text-green-600" />
           </div>
-          <h2 className="text-2xl font-bold mb-2">Check Your Email</h2>
+          <h2 className="text-2xl font-bold mb-2">Password Reset Request Sent</h2>
           <p className="text-gray-600 mb-6">
-            We've sent password reset instructions to {email}
+            {resetLink ? 'Click the link below to reset your password:' : `We've sent password reset instructions to ${email}`}
           </p>
-          {resetLink && (
+          {resetLink ? (
             <div className="bg-blue-50 border border-blue-200 rounded-lg p-4 mb-6">
               <p className="text-sm text-blue-800 mb-2">
                 <strong>Reset Link:</strong>
@@ -60,6 +61,12 @@ const ForgotPasswordPage: React.FC = () => {
               </a>
               <p className="text-xs text-blue-600 mt-2">
                 This link expires in 1 hour
+              </p>
+            </div>
+          ) : (
+            <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-4 mb-6">
+              <p className="text-sm text-yellow-800">
+                <strong>Note:</strong> In production, you would receive an email. The backend may need to be updated to return the reset link.
               </p>
             </div>
           )}
