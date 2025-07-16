@@ -1,10 +1,13 @@
 from typing import List, Optional
+import os
+
+# Handle both pydantic v1 and v2
 try:
     from pydantic_settings import BaseSettings
 except ImportError:
     from pydantic import BaseSettings
+    
 from pydantic import AnyHttpUrl
-import os
 
 
 class Settings(BaseSettings):
@@ -13,15 +16,9 @@ class Settings(BaseSettings):
     APP_VERSION: str = "1.0.0"
     DEBUG: bool = os.getenv("ENVIRONMENT", "development") == "development"
     
-    # Database
-    DATABASE_URL: str = os.getenv("DATABASE_URL", "sqlite:///./aloha_learn.db")
+    # Database - will be set from environment
+    DATABASE_URL: str = ""
     DATABASE_ECHO: bool = False
-    
-    def __init__(self, **kwargs):
-        super().__init__(**kwargs)
-        # Convert postgres:// to postgresql:// for SQLAlchemy compatibility
-        if self.DATABASE_URL and self.DATABASE_URL.startswith("postgres://"):
-            self.DATABASE_URL = self.DATABASE_URL.replace("postgres://", "postgresql://", 1)
     
     # Security
     SECRET_KEY: str = os.getenv("SECRET_KEY", "your-secret-key-here-change-in-production")
