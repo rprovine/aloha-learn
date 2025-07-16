@@ -22,11 +22,16 @@ const LessonPage: React.FC = () => {
   const [showFeedback, setShowFeedback] = useState(false);
   const [lessonScore, setLessonScore] = useState(0);
 
+  console.log('LessonPage rendering with id:', id);
+
   const lessonId = parseInt(id || '1');
   const lessonContent = getLessonContent(lessonId);
   const lessonInfo = curriculum.find(lesson => lesson.id === lessonId);
 
+  console.log('Lesson data:', { lessonId, hasContent: !!lessonContent, hasInfo: !!lessonInfo });
+
   useEffect(() => {
+    console.log('useEffect triggered for lessonId:', lessonId);
     // Reset state when lesson changes
     setCurrentSlide(0);
     setSelectedAnswer(null);
@@ -35,7 +40,20 @@ const LessonPage: React.FC = () => {
     
     // Scroll to top when lesson changes
     window.scrollTo(0, 0);
-  }, [id]); // Use id directly from params
+  }, [lessonId]); // Use lessonId to ensure proper re-render
+
+  // Add loading state to prevent white screen
+  if (!id || isNaN(lessonId)) {
+    return (
+      <div className="min-h-screen bg-gray-50 py-8">
+        <div className="container mx-auto px-4 max-w-3xl">
+          <div className="card text-center py-12">
+            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-ocean mx-auto"></div>
+          </div>
+        </div>
+      </div>
+    );
+  }
 
   if (!lessonContent || !lessonInfo) {
     return (
@@ -63,7 +81,7 @@ const LessonPage: React.FC = () => {
     
     const slide = lessonContent.slides[currentSlide];
     // Auto-advance after 2 seconds if correct
-    if (slide.type === 'practice' && index === slide.correctAnswer) {
+    if (slide?.type === 'practice' && index === slide.correctAnswer) {
       setLessonScore(lessonScore + 25); // Add points for correct answer
       setTimeout(() => {
         nextSlide();
@@ -88,7 +106,54 @@ const LessonPage: React.FC = () => {
   };
 
 
+  // Validate slides exist
+  if (!lessonContent.slides || lessonContent.slides.length === 0) {
+    console.error('No slides in lesson:', lessonId);
+    return (
+      <div className="min-h-screen bg-gray-50 py-8">
+        <div className="container mx-auto px-4 max-w-3xl">
+          <div className="card text-center py-12">
+            <AlertCircle className="w-16 h-16 text-gray-400 mx-auto mb-4" />
+            <h2 className="text-2xl font-bold mb-2">Lesson Content Missing</h2>
+            <p className="text-gray-600 mb-6">This lesson doesn't have any slides yet.</p>
+            <button
+              onClick={() => navigate('/learn')}
+              className="btn-primary"
+            >
+              Back to Lessons
+            </button>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
   const slide = lessonContent.slides[currentSlide];
+  
+  // Ensure slide exists
+  if (!slide) {
+    console.error('No slide at index:', currentSlide, 'in lesson:', lessonId);
+    return (
+      <div className="min-h-screen bg-gray-50 py-8">
+        <div className="container mx-auto px-4 max-w-3xl">
+          <div className="card text-center py-12">
+            <AlertCircle className="w-16 h-16 text-gray-400 mx-auto mb-4" />
+            <h2 className="text-2xl font-bold mb-2">Error Loading Slide</h2>
+            <p className="text-gray-600 mb-6">Unable to load slide {currentSlide + 1}.</p>
+            <button
+              onClick={() => {
+                setCurrentSlide(0);
+                navigate(`/lesson/${lessonId}`);
+              }}
+              className="btn-primary"
+            >
+              Restart Lesson
+            </button>
+          </div>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen bg-gray-50 py-8">
@@ -128,7 +193,7 @@ const LessonPage: React.FC = () => {
           animate={{ opacity: 1, x: 0 }}
           className="card min-h-[400px] flex flex-col"
         >
-          {slide.type === 'intro' && (
+          {slide?.type === 'intro' && (
             <div className="text-center py-12">
               <div className="text-6xl mb-6">{slide.image}</div>
               <h1 className="text-3xl font-display font-bold mb-4">{slide.title}</h1>
@@ -139,7 +204,7 @@ const LessonPage: React.FC = () => {
             </div>
           )}
 
-          {slide.type === 'vocabulary' && (
+          {slide?.type === 'vocabulary' && (
             <div className="py-8">
               <div className="text-center mb-8">
                 <h2 className="text-4xl font-display font-bold text-ocean mb-2">
@@ -196,7 +261,7 @@ const LessonPage: React.FC = () => {
             </div>
           )}
 
-          {slide.type === 'grammar' && (
+          {slide?.type === 'grammar' && (
             <div className="py-8">
               <h2 className="text-2xl font-bold mb-4 text-center text-ocean">
                 {slide.grammarPoint}
@@ -219,7 +284,7 @@ const LessonPage: React.FC = () => {
             </div>
           )}
 
-          {slide.type === 'culture' && (
+          {slide?.type === 'culture' && (
             <div className="py-8 text-center">
               <h2 className="text-2xl font-bold mb-4 text-ocean">{slide.title}</h2>
               <div className="bg-gradient-to-r from-ocean-light/20 to-tropical-light/20 p-6 rounded-lg mb-4">
@@ -233,7 +298,7 @@ const LessonPage: React.FC = () => {
             </div>
           )}
 
-          {slide.type === 'practice' && slide.options && (
+          {slide?.type === 'practice' && slide.options && (
             <div className="py-8">
               <h2 className="text-2xl font-bold mb-6 text-center">{slide.question}</h2>
               <div className="grid grid-cols-2 gap-4">
@@ -265,7 +330,7 @@ const LessonPage: React.FC = () => {
             </div>
           )}
 
-          {slide.type === 'complete' && (
+          {slide?.type === 'complete' && (
             <div className="text-center py-12">
               <div className="text-6xl mb-6">🎉</div>
               <h2 className="text-3xl font-display font-bold mb-4">{slide.message}</h2>
@@ -286,7 +351,10 @@ const LessonPage: React.FC = () => {
                 </button>
                 {lessonId < 30 && (
                   <button
-                    onClick={() => navigate(`/lesson/${lessonId + 1}`)}
+                    onClick={() => {
+                      console.log('Navigating to lesson:', lessonId + 1);
+                      navigate(`/lesson/${lessonId + 1}`);
+                    }}
                     className="btn-primary"
                   >
                     Next Lesson →
@@ -298,7 +366,7 @@ const LessonPage: React.FC = () => {
         </motion.div>
 
         {/* Navigation */}
-        {slide.type !== 'complete' && (
+        {slide?.type !== 'complete' && (
           <div className="flex justify-between mt-6">
             <button
               onClick={prevSlide}
@@ -315,9 +383,9 @@ const LessonPage: React.FC = () => {
 
             <button
               onClick={nextSlide}
-              disabled={slide.type === 'practice' && !showFeedback}
+              disabled={slide?.type === 'practice' && !showFeedback}
               className={`flex items-center gap-2 px-4 py-2 rounded-lg ${
-                slide.type === 'practice' && !showFeedback
+                slide?.type === 'practice' && !showFeedback
                   ? 'bg-gray-100 text-gray-400 cursor-not-allowed'
                   : 'bg-ocean text-white hover:bg-ocean-dark'
               }`}

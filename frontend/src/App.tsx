@@ -12,6 +12,7 @@ import LessonPage from './pages/LessonPage';
 import ForgotPasswordPage from './pages/ForgotPasswordPage';
 import ResetPasswordPage from './pages/ResetPasswordPage';
 import ProtectedRoute from './components/ProtectedRoute';
+import ErrorBoundary from './components/ErrorBoundary';
 
 function App() {
   return (
@@ -47,7 +48,9 @@ function App() {
                 path="/lesson/:id"
                 element={
                   <ProtectedRoute>
-                    <LessonPage />
+                    <ErrorBoundary>
+                      <LessonPage />
+                    </ErrorBoundary>
                   </ProtectedRoute>
                 }
               />
