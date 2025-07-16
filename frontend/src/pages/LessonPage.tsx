@@ -4,10 +4,8 @@ import { motion } from 'framer-motion';
 import { 
   ChevronLeft, 
   ChevronRight, 
-  Volume2, 
   CheckCircle,
   XCircle,
-  BookOpen,
   AlertCircle,
   Info
 } from 'lucide-react';
@@ -89,30 +87,6 @@ const LessonPage: React.FC = () => {
     }
   };
 
-  const speakWord = (text: string) => {
-    const utterance = new SpeechSynthesisUtterance(text);
-    
-    // Try to find a Hawaiian voice, fallback to any Pacific/Polynesian voice
-    const voices = speechSynthesis.getVoices();
-    const hawaiianVoice = voices.find(voice => 
-      voice.lang.includes('haw') || 
-      voice.lang.includes('HAW') ||
-      voice.name.toLowerCase().includes('hawaiian')
-    );
-    
-    if (hawaiianVoice) {
-      utterance.voice = hawaiianVoice;
-    } else {
-      // Use a slower rate and different pitch for better approximation
-      utterance.rate = 0.7; // Slower for clearer pronunciation
-      utterance.pitch = 1.1; // Slightly higher pitch
-    }
-    
-    // Hawaiian has melodic qualities
-    utterance.volume = 1.0;
-    
-    speechSynthesis.speak(utterance);
-  };
 
   const slide = lessonContent.slides[currentSlide];
 

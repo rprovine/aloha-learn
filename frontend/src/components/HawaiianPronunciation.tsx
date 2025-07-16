@@ -84,9 +84,6 @@ export const HawaiianPronunciation: React.FC<HawaiianPronunciationProps> = ({
 
     // Cancel any ongoing speech
     speechSynthesis.cancel();
-
-    // Split text into syllables for better pronunciation
-    const syllables = text.toLowerCase().split(/(?=[aeiouāēīōū])/g);
     
     // Create utterance
     const utterance = new SpeechSynthesisUtterance(text);

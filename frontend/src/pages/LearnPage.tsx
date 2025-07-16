@@ -5,7 +5,6 @@ import {
   BookOpen, 
   Lock, 
   CheckCircle,
-  Clock,
   Star,
   Sparkles,
   ChevronDown,

@@ -13,7 +13,7 @@ import {
 } from 'lucide-react';
 import api from '../services/api';
 import { useAuth } from '../contexts/AuthContext';
-import { HawaiianPronunciation, HawaiianPronunciationGuide } from '../components/HawaiianPronunciation';
+import { HawaiianPronunciation } from '../components/HawaiianPronunciation';
 
 interface TranslationRequest {
   text: string;
