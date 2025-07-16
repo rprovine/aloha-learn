@@ -2,10 +2,8 @@ services:
   # Backend service
   - type: web
     name: aloha-learn-backend
-    runtime: python
-    buildCommand: "cd backend && pip install --upgrade pip && pip install -r requirements-minimal.txt"
-    startCommand: "cd backend && python run.py"
-    pythonVersion: "3.11"
+    runtime: docker
+    dockerfilePath: ./Dockerfile
     envVars:
       - key: DATABASE_URL
         fromDatabase:
