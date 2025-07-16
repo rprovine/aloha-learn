@@ -42,8 +42,9 @@ app.include_router(pronunciation.router, prefix="/api/v1/pronunciation", tags=["
 
 # Debug router (only in development)
 if settings.DEBUG:
-    from app.api.v1 import debug
+    from app.api.v1 import debug, simple_test
     app.include_router(debug.router, prefix="/api/v1/debug", tags=["debug"])
+    app.include_router(simple_test.router, prefix="/api/v1/test", tags=["test"])
 
 @app.get("/")
 def read_root():
