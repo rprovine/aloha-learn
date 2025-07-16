@@ -1,0 +1,44 @@
+@import url('https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;700;900&family=Inter:wght@300;400;500;600;700&display=swap');
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  :root {
+    --background: 0 0% 100%;
+    --foreground: 222.2 84% 4.9%;
+  }
+
+  body {
+    @apply bg-white text-gray-900 font-body;
+  }
+
+  h1, h2, h3, h4, h5, h6 {
+    @apply font-display;
+  }
+}
+
+@layer components {
+  .btn-primary {
+    @apply bg-ocean text-white px-6 py-3 rounded-lg font-semibold transition-all duration-200 hover:bg-ocean-dark hover:scale-105 focus:outline-none focus:ring-4 focus:ring-ocean/30;
+  }
+
+  .btn-secondary {
+    @apply bg-sunset text-white px-6 py-3 rounded-lg font-semibold transition-all duration-200 hover:bg-sunset-dark hover:scale-105 focus:outline-none focus:ring-4 focus:ring-sunset/30;
+  }
+
+  .card {
+    @apply bg-white rounded-xl shadow-lg p-6 transition-all duration-200 hover:shadow-xl;
+  }
+
+  .hawaiian-pattern {
+    background-image: 
+      repeating-linear-gradient(45deg, transparent, transparent 35px, rgba(20, 184, 166, 0.1) 35px, rgba(20, 184, 166, 0.1) 70px),
+      repeating-linear-gradient(-45deg, transparent, transparent 35px, rgba(251, 146, 60, 0.1) 35px, rgba(251, 146, 60, 0.1) 70px);
+  }
+
+  .text-gradient {
+    @apply bg-clip-text text-transparent bg-gradient-to-r from-ocean via-tropical to-sunset;
+  }
+}
