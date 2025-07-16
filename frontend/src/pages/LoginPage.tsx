@@ -62,7 +62,7 @@ const LoginPage: React.FC = () => {
                 value={formData.username}
                 onChange={(e) => setFormData({ ...formData, username: e.target.value })}
                 className="w-full px-4 py-3 pl-10 border border-gray-300 rounded-lg focus:ring-2 focus:ring-ocean focus:border-ocean"
-                placeholder="Enter your username"
+                placeholder="Enter your username or email"
                 required
               />
               <Mail className="absolute left-3 top-3.5 w-5 h-5 text-gray-400" />
@@ -103,9 +103,9 @@ const LoginPage: React.FC = () => {
               <input type="checkbox" className="rounded text-ocean focus:ring-ocean" />
               <span className="ml-2 text-sm text-gray-600">Remember me</span>
             </label>
-            <a href="#" className="text-sm text-ocean hover:underline">
+            <Link to="/forgot-password" className="text-sm text-ocean hover:underline">
               Forgot password?
-            </a>
+            </Link>
           </div>
 
           <button

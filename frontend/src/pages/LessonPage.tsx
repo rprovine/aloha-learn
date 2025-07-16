@@ -34,7 +34,10 @@ const LessonPage: React.FC = () => {
     setSelectedAnswer(null);
     setShowFeedback(false);
     setLessonScore(0);
-  }, [lessonId]);
+    
+    // Scroll to top when lesson changes
+    window.scrollTo(0, 0);
+  }, [id]); // Use id directly from params
 
   if (!lessonContent || !lessonInfo) {
     return (
@@ -146,7 +149,7 @@ const LessonPage: React.FC = () => {
 
         {/* Slide Content */}
         <motion.div
-          key={currentSlide}
+          key={`${lessonId}-${currentSlide}`}
           initial={{ opacity: 0, x: 20 }}
           animate={{ opacity: 1, x: 0 }}
           className="card min-h-[400px] flex flex-col"

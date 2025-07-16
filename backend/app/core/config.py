@@ -1,17 +1,24 @@
 from typing import List, Optional
 from pydantic_settings import BaseSettings
 from pydantic import AnyHttpUrl
+import os
 
 
 class Settings(BaseSettings):
     # Application
     APP_NAME: str = "Aloha Learn"
     APP_VERSION: str = "1.0.0"
-    DEBUG: bool = True
+    DEBUG: bool = os.getenv("ENVIRONMENT", "development") == "development"
     
     # Database
     DATABASE_URL: str
     DATABASE_ECHO: bool = False
+    
+    def __init__(self, **kwargs):
+        super().__init__(**kwargs)
+        # Convert postgres:// to postgresql:// for SQLAlchemy compatibility
+        if self.DATABASE_URL.startswith("postgres://"):
+            self.DATABASE_URL = self.DATABASE_URL.replace("postgres://", "postgresql://", 1)
     
     # Security
     SECRET_KEY: str

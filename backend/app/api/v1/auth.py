@@ -8,8 +8,23 @@ from app.core.security import verify_password, get_password_hash, create_access_
 from app.schemas.user import User, UserCreate, Token
 from app.models.user import User as UserModel
 from app.api.deps import get_current_user
+from pydantic import BaseModel, EmailStr
+import secrets
+import logging
+
+logger = logging.getLogger(__name__)
 
 router = APIRouter()
+
+# In-memory storage for reset tokens (in production, use Redis or database)
+reset_tokens = {}
+
+class ForgotPasswordRequest(BaseModel):
+    email: EmailStr
+
+class ResetPasswordRequest(BaseModel):
+    token: str
+    new_password: str
 
 
 @router.post("/register", response_model=User)
@@ -59,8 +74,11 @@ def login(
     form_data: OAuth2PasswordRequestForm = Depends(),
     db: Session = Depends(get_db)
 ):
-    # Find user by username
-    user = db.query(UserModel).filter(UserModel.username == form_data.username).first()
+    # Find user by username or email
+    user = db.query(UserModel).filter(
+        (UserModel.username == form_data.username) | 
+        (UserModel.email == form_data.username)
+    ).first()
     
     if not user or not verify_password(form_data.password, user.hashed_password):
         raise HTTPException(
@@ -91,3 +109,62 @@ def logout(current_user: UserModel = Depends(get_current_user)):
     # In a real application, you might want to invalidate the token
     # For now, we'll just return a success message
     return {"message": "Successfully logged out"}
+
+
+@router.post("/forgot-password")
+def forgot_password(
+    request: ForgotPasswordRequest,
+    db: Session = Depends(get_db)
+):
+    # Find user by email
+    user = db.query(UserModel).filter(UserModel.email == request.email).first()
+    
+    # Always return success to prevent email enumeration
+    if user:
+        # Generate reset token
+        token = secrets.token_urlsafe(32)
+        reset_tokens[token] = {
+            "user_id": user.id,
+            "email": user.email,
+            "expires": datetime.utcnow() + timedelta(hours=1)
+        }
+        
+        # In production, send email here
+        # For development, log the reset link
+        reset_link = f"http://localhost:5173/reset-password?token={token}"
+        logger.info(f"Password reset link for {user.email}: {reset_link}")
+        
+    return {"message": "If an account with that email exists, we've sent password reset instructions."}
+
+
+@router.post("/reset-password")
+def reset_password(
+    request: ResetPasswordRequest,
+    db: Session = Depends(get_db)
+):
+    # Validate token
+    token_data = reset_tokens.get(request.token)
+    
+    if not token_data or datetime.utcnow() > token_data["expires"]:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Invalid or expired reset token"
+        )
+    
+    # Find user and update password
+    user = db.query(UserModel).filter(UserModel.id == token_data["user_id"]).first()
+    
+    if not user:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="User not found"
+        )
+    
+    # Update password
+    user.hashed_password = get_password_hash(request.new_password)
+    db.commit()
+    
+    # Remove used token
+    del reset_tokens[request.token]
+    
+    return {"message": "Password reset successfully"}
