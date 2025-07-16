@@ -143,3 +143,26 @@ async def test_network():
     }
     
     return results
+
+@app.get("/test-direct")
+async def test_direct_client():
+    """Test the direct HTTP client"""
+    try:
+        from app.services.openai_direct import get_direct_client
+        client = get_direct_client()
+        
+        response = await client.chat_completion(
+            messages=[{"role": "user", "content": "Say test"}],
+            max_tokens=10
+        )
+        
+        return {
+            "success": True,
+            "response": response['choices'][0]['message']['content']
+        }
+    except Exception as e:
+        return {
+            "success": False,
+            "error": str(e),
+            "error_type": type(e).__name__
+        }

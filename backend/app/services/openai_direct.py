@@ -13,10 +13,11 @@ class DirectOpenAIClient:
     """Direct HTTP client for OpenAI API that works reliably on Render"""
     
     def __init__(self, api_key: str):
-        self.api_key = api_key
+        # Strip any whitespace/newlines from the API key
+        self.api_key = api_key.strip()
         self.base_url = "https://api.openai.com/v1"
         self.headers = {
-            "Authorization": f"Bearer {api_key}",
+            "Authorization": f"Bearer {self.api_key}",
             "Content-Type": "application/json"
         }
     

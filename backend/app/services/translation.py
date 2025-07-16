@@ -23,18 +23,21 @@ class TranslationService:
             logger.info(f"Initializing OpenAI client with {timeout}s timeout")
             
             # Check if we're on Render
+            # Clean the API key
+            clean_api_key = settings.OPENAI_API_KEY.strip()
+            
             if os.getenv("RENDER"):
                 logger.info("Detected Render environment, using custom HTTP client")
                 from app.core.openai_config import get_http_client
                 self.client = openai.OpenAI(
-                    api_key=settings.OPENAI_API_KEY,
+                    api_key=clean_api_key,
                     timeout=timeout,
                     max_retries=3,
                     http_client=get_http_client()
                 )
             else:
                 self.client = openai.OpenAI(
-                    api_key=settings.OPENAI_API_KEY,
+                    api_key=clean_api_key,
                     timeout=timeout,
                     max_retries=3
                 )
