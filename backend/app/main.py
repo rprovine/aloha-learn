@@ -14,9 +14,17 @@ app = FastAPI(
 )
 
 # Configure CORS
+origins = settings.ALLOWED_ORIGINS.split(",")
+# Add Render URLs in production
+if settings.DEBUG is False:
+    origins.extend([
+        "https://aloha-learn-frontend.onrender.com",
+        "https://*.onrender.com"
+    ])
+
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=settings.ALLOWED_ORIGINS.split(","),
+    allow_origins=origins,
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
