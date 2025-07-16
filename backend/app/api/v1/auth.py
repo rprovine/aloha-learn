@@ -129,10 +129,20 @@ def forgot_password(
             "expires": datetime.utcnow() + timedelta(hours=1)
         }
         
-        # In production, send email here
-        # For development, log the reset link
-        reset_link = f"http://localhost:5173/reset-password?token={token}"
+        # Create reset link
+        frontend_url = os.getenv("FRONTEND_URL", "http://localhost:5173")
+        reset_link = f"{frontend_url}/reset-password?token={token}"
+        
+        # For development/demo, return the link directly
+        # In production with email service, send via email instead
         logger.info(f"Password reset link for {user.email}: {reset_link}")
+        
+        # Return link in response for demo purposes
+        return {
+            "message": "Password reset link generated",
+            "reset_link": reset_link,  # Remove this in production with email
+            "expires_in": "1 hour"
+        }
         
     return {"message": "If an account with that email exists, we've sent password reset instructions."}
 

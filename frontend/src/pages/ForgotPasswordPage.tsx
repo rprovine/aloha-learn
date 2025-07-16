@@ -9,6 +9,7 @@ const ForgotPasswordPage: React.FC = () => {
   const [isLoading, setIsLoading] = useState(false);
   const [isSuccess, setIsSuccess] = useState(false);
   const [error, setError] = useState('');
+  const [resetLink, setResetLink] = useState('');
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -16,8 +17,12 @@ const ForgotPasswordPage: React.FC = () => {
     setIsLoading(true);
 
     try {
-      await api.post('/auth/forgot-password', { email });
+      const response = await api.post('/auth/forgot-password', { email });
       setIsSuccess(true);
+      // For demo, we get the link directly
+      if (response.data.reset_link) {
+        setResetLink(response.data.reset_link);
+      }
     } catch (err: any) {
       setError(err.response?.data?.detail || 'Failed to send reset email. Please try again.');
     } finally {
@@ -40,11 +45,24 @@ const ForgotPasswordPage: React.FC = () => {
           <p className="text-gray-600 mb-6">
             We've sent password reset instructions to {email}
           </p>
-          <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-4 mb-6">
-            <p className="text-sm text-yellow-800">
-              <strong>Development Mode:</strong> Check the backend console for the reset link.
-            </p>
-          </div>
+          {resetLink && (
+            <div className="bg-blue-50 border border-blue-200 rounded-lg p-4 mb-6">
+              <p className="text-sm text-blue-800 mb-2">
+                <strong>Reset Link:</strong>
+              </p>
+              <a 
+                href={resetLink} 
+                className="text-sm text-blue-600 underline break-all hover:text-blue-800"
+                target="_blank"
+                rel="noopener noreferrer"
+              >
+                {resetLink}
+              </a>
+              <p className="text-xs text-blue-600 mt-2">
+                This link expires in 1 hour
+              </p>
+            </div>
+          )}
           <Link
             to="/login"
             className="text-ocean hover:underline font-semibold"
