@@ -13,6 +13,7 @@ import {
 } from 'lucide-react';
 import api from '../services/api';
 import { useAuth } from '../contexts/AuthContext';
+import { HawaiianPronunciation, HawaiianPronunciationGuide } from '../components/HawaiianPronunciation';
 
 interface TranslationRequest {
   text: string;
@@ -182,14 +183,21 @@ const TranslationTool: React.FC = () => {
                 >
                   <X className="w-5 h-5 text-gray-600" />
                 </button>
-                <button
-                  onClick={() => speakText(sourceText, sourceLang)}
-                  className="p-2 hover:bg-gray-100 rounded-lg transition-colors"
-                  disabled={!sourceText}
-                  title="Speak text"
-                >
-                  <Volume2 className="w-5 h-5 text-gray-600" />
-                </button>
+                {sourceText && sourceLang === 'haw' ? (
+                  <HawaiianPronunciation 
+                    text={sourceText} 
+                    showInfo={true}
+                  />
+                ) : (
+                  <button
+                    onClick={() => speakText(sourceText, sourceLang)}
+                    className="p-2 hover:bg-gray-100 rounded-lg transition-colors"
+                    disabled={!sourceText}
+                    title="Speak text"
+                  >
+                    <Volume2 className="w-5 h-5 text-gray-600" />
+                  </button>
+                )}
               </div>
             </div>
             
@@ -231,13 +239,20 @@ const TranslationTool: React.FC = () => {
                 </select>
               </div>
               <div className="flex items-center gap-2">
-                <button
-                  onClick={() => speakText(translatedText, targetLang)}
-                  className="p-2 hover:bg-gray-100 rounded-lg transition-colors"
-                  disabled={!translatedText}
-                >
-                  <Volume2 className="w-5 h-5 text-gray-600" />
-                </button>
+                {translatedText && targetLang === 'haw' ? (
+                  <HawaiianPronunciation 
+                    text={translatedText} 
+                    showInfo={true}
+                  />
+                ) : translatedText ? (
+                  <button
+                    onClick={() => speakText(translatedText, targetLang)}
+                    className="p-2 hover:bg-gray-100 rounded-lg transition-colors"
+                    disabled={!translatedText}
+                  >
+                    <Volume2 className="w-5 h-5 text-gray-600" />
+                  </button>
+                ) : null}
                 <button
                   onClick={copyToClipboard}
                   className="p-2 hover:bg-gray-100 rounded-lg transition-colors"
