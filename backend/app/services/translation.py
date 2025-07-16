@@ -5,6 +5,7 @@ from app.models.translation import Dictionary
 from sqlalchemy.orm import Session
 import json
 import logging
+import time
 
 # Configure logging
 logging.basicConfig(level=logging.INFO)
@@ -15,7 +16,11 @@ class TranslationService:
     def __init__(self, db: Session):
         self.db = db
         try:
-            self.client = openai.OpenAI(api_key=settings.OPENAI_API_KEY)
+            self.client = openai.OpenAI(
+                api_key=settings.OPENAI_API_KEY,
+                timeout=30.0,  # 30 second timeout
+                max_retries=3  # Retry up to 3 times
+            )
             logger.info(f"OpenAI client initialized successfully")
         except Exception as e:
             logger.error(f"Failed to initialize OpenAI client: {e}")
@@ -51,15 +56,30 @@ Return JSON:
 }}"""
 
         try:
-            response = self.client.chat.completions.create(
-                model="gpt-3.5-turbo-0125",
-                messages=[
-                    {"role": "system", "content": "Hawaiian translator. Return JSON only."},
-                    {"role": "user", "content": prompt}
-                ],
-                temperature=0.3,
-                response_format={"type": "json_object"}
-            )
+            # Retry logic for connection issues
+            max_retries = 3
+            retry_delay = 1
+            last_error = None
+            
+            for attempt in range(max_retries):
+                try:
+                    response = self.client.chat.completions.create(
+                        model="gpt-3.5-turbo-0125",
+                        messages=[
+                            {"role": "system", "content": "Hawaiian translator. Return JSON only."},
+                            {"role": "user", "content": prompt}
+                        ],
+                        temperature=0.3,
+                        response_format={"type": "json_object"}
+                    )
+                    break  # Success, exit retry loop
+                except openai.APIConnectionError as e:
+                    last_error = e
+                    logger.warning(f"Connection error on attempt {attempt + 1}: {e}")
+                    if attempt < max_retries - 1:
+                        time.sleep(retry_delay * (attempt + 1))
+                    else:
+                        raise last_error
             
             result = json.loads(response.choices[0].message.content)
             
@@ -123,15 +143,30 @@ Format your response as JSON:
 }}"""
 
         try:
-            response = self.client.chat.completions.create(
-                model="gpt-3.5-turbo-0125",
-                messages=[
-                    {"role": "system", "content": "You are a Hawaiian language expert focused on preserving cultural nuance in translations."},
-                    {"role": "user", "content": prompt}
-                ],
-                temperature=0.3,
-                response_format={"type": "json_object"}
-            )
+            # Retry logic for connection issues
+            max_retries = 3
+            retry_delay = 1
+            last_error = None
+            
+            for attempt in range(max_retries):
+                try:
+                    response = self.client.chat.completions.create(
+                        model="gpt-3.5-turbo-0125",
+                        messages=[
+                            {"role": "system", "content": "You are a Hawaiian language expert focused on preserving cultural nuance in translations."},
+                            {"role": "user", "content": prompt}
+                        ],
+                        temperature=0.3,
+                        response_format={"type": "json_object"}
+                    )
+                    break  # Success, exit retry loop
+                except openai.APIConnectionError as e:
+                    last_error = e
+                    logger.warning(f"Connection error on attempt {attempt + 1}: {e}")
+                    if attempt < max_retries - 1:
+                        time.sleep(retry_delay * (attempt + 1))
+                    else:
+                        raise last_error
             
             result = json.loads(response.choices[0].message.content)
             
