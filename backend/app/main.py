@@ -57,3 +57,89 @@ def read_root():
 @app.get("/health")
 def health_check():
     return {"status": "healthy"}
+
+@app.get("/test-network")
+async def test_network():
+    """Public network test endpoint"""
+    import httpx
+    import openai
+    import asyncio
+    import os
+    
+    results = {"tests": []}
+    
+    # Test 1: Basic external connectivity
+    try:
+        async with httpx.AsyncClient(timeout=5.0) as client:
+            response = await client.get("https://httpbin.org/get")
+            results["tests"].append({
+                "name": "httpbin",
+                "success": True,
+                "status": response.status_code
+            })
+    except Exception as e:
+        results["tests"].append({
+            "name": "httpbin",
+            "success": False,
+            "error": str(e)[:100]
+        })
+    
+    # Test 2: OpenAI connectivity (no auth)
+    try:
+        async with httpx.AsyncClient(timeout=5.0) as client:
+            response = await client.get("https://api.openai.com/v1/models")
+            results["tests"].append({
+                "name": "openai_connectivity",
+                "success": True,
+                "status": response.status_code
+            })
+    except Exception as e:
+        results["tests"].append({
+            "name": "openai_connectivity",
+            "success": False,
+            "error": str(e)[:100]
+        })
+    
+    # Test 3: OpenAI API with timeout
+    try:
+        client = openai.OpenAI(
+            api_key=settings.OPENAI_API_KEY,
+            timeout=5.0,
+            max_retries=0
+        )
+        
+        async def test_call():
+            return await asyncio.to_thread(
+                lambda: client.chat.completions.create(
+                    model="gpt-3.5-turbo",
+                    messages=[{"role": "user", "content": "Hi"}],
+                    max_tokens=5
+                )
+            )
+        
+        response = await asyncio.wait_for(test_call(), timeout=5.0)
+        results["tests"].append({
+            "name": "openai_api",
+            "success": True,
+            "response": response.choices[0].message.content
+        })
+    except asyncio.TimeoutError:
+        results["tests"].append({
+            "name": "openai_api",
+            "success": False,
+            "error": "Timeout after 5 seconds"
+        })
+    except Exception as e:
+        results["tests"].append({
+            "name": "openai_api",
+            "success": False,
+            "error": f"{type(e).__name__}: {str(e)[:100]}"
+        })
+    
+    results["environment"] = {
+        "is_render": bool(os.getenv("RENDER")),
+        "region": os.getenv("RENDER_REGION", "unknown"),
+        "python_version": os.sys.version.split()[0]
+    }
+    
+    return results
