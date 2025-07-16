@@ -8,9 +8,15 @@ from app.core.security import verify_password, get_password_hash, create_access_
 from app.schemas.user import User, UserCreate, Token
 from app.models.user import User as UserModel
 from app.api.deps import get_current_user
-from pydantic import BaseModel, EmailStr
+from pydantic import BaseModel
+try:
+    from pydantic import EmailStr
+except ImportError:
+    # Fallback for older pydantic
+    EmailStr = str
 import secrets
 import logging
+import os
 
 logger = logging.getLogger(__name__)
 
