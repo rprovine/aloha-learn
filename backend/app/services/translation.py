@@ -6,6 +6,8 @@ from sqlalchemy.orm import Session
 import json
 import logging
 import time
+import httpx
+import os
 
 # Configure logging
 logging.basicConfig(level=logging.INFO)
@@ -16,11 +18,26 @@ class TranslationService:
     def __init__(self, db: Session):
         self.db = db
         try:
-            self.client = openai.OpenAI(
-                api_key=settings.OPENAI_API_KEY,
-                timeout=30.0,  # 30 second timeout
-                max_retries=3  # Retry up to 3 times
-            )
+            # Get timeout from environment or use default
+            timeout = float(os.getenv("OPENAI_TIMEOUT", "60.0"))
+            logger.info(f"Initializing OpenAI client with {timeout}s timeout")
+            
+            # Check if we're on Render
+            if os.getenv("RENDER"):
+                logger.info("Detected Render environment, using custom HTTP client")
+                from app.core.openai_config import get_http_client
+                self.client = openai.OpenAI(
+                    api_key=settings.OPENAI_API_KEY,
+                    timeout=timeout,
+                    max_retries=3,
+                    http_client=get_http_client()
+                )
+            else:
+                self.client = openai.OpenAI(
+                    api_key=settings.OPENAI_API_KEY,
+                    timeout=timeout,
+                    max_retries=3
+                )
             logger.info(f"OpenAI client initialized successfully")
         except Exception as e:
             logger.error(f"Failed to initialize OpenAI client: {e}")
@@ -75,10 +92,18 @@ Return JSON:
                     break  # Success, exit retry loop
                 except openai.APIConnectionError as e:
                     last_error = e
-                    logger.warning(f"Connection error on attempt {attempt + 1}: {e}")
+                    logger.error(f"APIConnectionError on attempt {attempt + 1}/{max_retries}")
+                    logger.error(f"Error details: {repr(e)}")
+                    logger.error(f"Error message: {str(e)}")
+                    if hasattr(e, '__cause__'):
+                        logger.error(f"Underlying cause: {repr(e.__cause__)}")
+                    
                     if attempt < max_retries - 1:
-                        time.sleep(retry_delay * (attempt + 1))
+                        wait_time = retry_delay * (attempt + 1)
+                        logger.info(f"Waiting {wait_time} seconds before retry...")
+                        time.sleep(wait_time)
                     else:
+                        logger.error(f"All attempts failed after {max_retries} tries")
                         raise last_error
             
             result = json.loads(response.choices[0].message.content)
@@ -162,10 +187,18 @@ Format your response as JSON:
                     break  # Success, exit retry loop
                 except openai.APIConnectionError as e:
                     last_error = e
-                    logger.warning(f"Connection error on attempt {attempt + 1}: {e}")
+                    logger.error(f"APIConnectionError on attempt {attempt + 1}/{max_retries}")
+                    logger.error(f"Error details: {repr(e)}")
+                    logger.error(f"Error message: {str(e)}")
+                    if hasattr(e, '__cause__'):
+                        logger.error(f"Underlying cause: {repr(e.__cause__)}")
+                    
                     if attempt < max_retries - 1:
-                        time.sleep(retry_delay * (attempt + 1))
+                        wait_time = retry_delay * (attempt + 1)
+                        logger.info(f"Waiting {wait_time} seconds before retry...")
+                        time.sleep(wait_time)
                     else:
+                        logger.error(f"All attempts failed after {max_retries} tries")
                         raise last_error
             
             result = json.loads(response.choices[0].message.content)
