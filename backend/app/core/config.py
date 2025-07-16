@@ -14,7 +14,7 @@ class Settings(BaseSettings):
     # Application
     APP_NAME: str = "Aloha Learn"
     APP_VERSION: str = "1.0.0"
-    DEBUG: bool = os.getenv("ENVIRONMENT", "development") == "development"
+    DEBUG: bool = os.getenv("DEBUG", os.getenv("ENVIRONMENT", "development") == "development")
     
     # Database - will be set from environment
     DATABASE_URL: str = ""

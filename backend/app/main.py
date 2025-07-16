@@ -40,6 +40,11 @@ app.include_router(auth.router, prefix="/api/v1/auth", tags=["authentication"])
 app.include_router(translation.router, prefix="/api/v1/translation", tags=["translation"])
 app.include_router(pronunciation.router, prefix="/api/v1/pronunciation", tags=["pronunciation"])
 
+# Debug router (only in development)
+if settings.DEBUG:
+    from app.api.v1 import debug
+    app.include_router(debug.router, prefix="/api/v1/debug", tags=["debug"])
+
 @app.get("/")
 def read_root():
     return {
