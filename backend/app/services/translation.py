@@ -73,40 +73,57 @@ Return JSON:
 }}"""
 
         try:
-            # Retry logic for connection issues
-            max_retries = 3
-            retry_delay = 1
-            last_error = None
-            
-            for attempt in range(max_retries):
-                try:
-                    response = self.client.chat.completions.create(
-                        model="gpt-3.5-turbo-0125",
-                        messages=[
-                            {"role": "system", "content": "Hawaiian translator. Return JSON only."},
-                            {"role": "user", "content": prompt}
-                        ],
-                        temperature=0.3,
-                        response_format={"type": "json_object"}
-                    )
-                    break  # Success, exit retry loop
-                except openai.APIConnectionError as e:
-                    last_error = e
-                    logger.error(f"APIConnectionError on attempt {attempt + 1}/{max_retries}")
-                    logger.error(f"Error details: {repr(e)}")
-                    logger.error(f"Error message: {str(e)}")
-                    if hasattr(e, '__cause__'):
-                        logger.error(f"Underlying cause: {repr(e.__cause__)}")
-                    
-                    if attempt < max_retries - 1:
-                        wait_time = retry_delay * (attempt + 1)
-                        logger.info(f"Waiting {wait_time} seconds before retry...")
-                        time.sleep(wait_time)
-                    else:
-                        logger.error(f"All attempts failed after {max_retries} tries")
-                        raise last_error
-            
-            result = json.loads(response.choices[0].message.content)
+            # Use direct HTTP client on Render
+            if os.getenv("RENDER"):
+                logger.info("Using direct HTTP client for OpenAI API on Render")
+                from app.services.openai_direct import get_direct_client
+                
+                direct_client = get_direct_client()
+                response = await direct_client.chat_completion(
+                    messages=[
+                        {"role": "system", "content": "Hawaiian translator. Return JSON only."},
+                        {"role": "user", "content": prompt}
+                    ],
+                    temperature=0.3,
+                    response_format={"type": "json_object"}
+                )
+                result = json.loads(response['choices'][0]['message']['content'])
+            else:
+                # Use regular SDK for local development
+                # Retry logic for connection issues
+                max_retries = 3
+                retry_delay = 1
+                last_error = None
+                
+                for attempt in range(max_retries):
+                    try:
+                        response = self.client.chat.completions.create(
+                            model="gpt-3.5-turbo-0125",
+                            messages=[
+                                {"role": "system", "content": "Hawaiian translator. Return JSON only."},
+                                {"role": "user", "content": prompt}
+                            ],
+                            temperature=0.3,
+                            response_format={"type": "json_object"}
+                        )
+                        break  # Success, exit retry loop
+                    except openai.APIConnectionError as e:
+                        last_error = e
+                        logger.error(f"APIConnectionError on attempt {attempt + 1}/{max_retries}")
+                        logger.error(f"Error details: {repr(e)}")
+                        logger.error(f"Error message: {str(e)}")
+                        if hasattr(e, '__cause__'):
+                            logger.error(f"Underlying cause: {repr(e.__cause__)}")
+                        
+                        if attempt < max_retries - 1:
+                            wait_time = retry_delay * (attempt + 1)
+                            logger.info(f"Waiting {wait_time} seconds before retry...")
+                            time.sleep(wait_time)
+                        else:
+                            logger.error(f"All attempts failed after {max_retries} tries")
+                            raise last_error
+                
+                result = json.loads(response.choices[0].message.content)
             
             # Enhance with dictionary data if available
             if dictionary_results:
@@ -168,40 +185,57 @@ Format your response as JSON:
 }}"""
 
         try:
-            # Retry logic for connection issues
-            max_retries = 3
-            retry_delay = 1
-            last_error = None
-            
-            for attempt in range(max_retries):
-                try:
-                    response = self.client.chat.completions.create(
-                        model="gpt-3.5-turbo-0125",
-                        messages=[
-                            {"role": "system", "content": "You are a Hawaiian language expert focused on preserving cultural nuance in translations."},
-                            {"role": "user", "content": prompt}
-                        ],
-                        temperature=0.3,
-                        response_format={"type": "json_object"}
-                    )
-                    break  # Success, exit retry loop
-                except openai.APIConnectionError as e:
-                    last_error = e
-                    logger.error(f"APIConnectionError on attempt {attempt + 1}/{max_retries}")
-                    logger.error(f"Error details: {repr(e)}")
-                    logger.error(f"Error message: {str(e)}")
-                    if hasattr(e, '__cause__'):
-                        logger.error(f"Underlying cause: {repr(e.__cause__)}")
-                    
-                    if attempt < max_retries - 1:
-                        wait_time = retry_delay * (attempt + 1)
-                        logger.info(f"Waiting {wait_time} seconds before retry...")
-                        time.sleep(wait_time)
-                    else:
-                        logger.error(f"All attempts failed after {max_retries} tries")
-                        raise last_error
-            
-            result = json.loads(response.choices[0].message.content)
+            # Use direct HTTP client on Render
+            if os.getenv("RENDER"):
+                logger.info("Using direct HTTP client for OpenAI API on Render")
+                from app.services.openai_direct import get_direct_client
+                
+                direct_client = get_direct_client()
+                response = await direct_client.chat_completion(
+                    messages=[
+                        {"role": "system", "content": "You are a Hawaiian language expert focused on preserving cultural nuance in translations."},
+                        {"role": "user", "content": prompt}
+                    ],
+                    temperature=0.3,
+                    response_format={"type": "json_object"}
+                )
+                result = json.loads(response['choices'][0]['message']['content'])
+            else:
+                # Use regular SDK for local development
+                # Retry logic for connection issues
+                max_retries = 3
+                retry_delay = 1
+                last_error = None
+                
+                for attempt in range(max_retries):
+                    try:
+                        response = self.client.chat.completions.create(
+                            model="gpt-3.5-turbo-0125",
+                            messages=[
+                                {"role": "system", "content": "You are a Hawaiian language expert focused on preserving cultural nuance in translations."},
+                                {"role": "user", "content": prompt}
+                            ],
+                            temperature=0.3,
+                            response_format={"type": "json_object"}
+                        )
+                        break  # Success, exit retry loop
+                    except openai.APIConnectionError as e:
+                        last_error = e
+                        logger.error(f"APIConnectionError on attempt {attempt + 1}/{max_retries}")
+                        logger.error(f"Error details: {repr(e)}")
+                        logger.error(f"Error message: {str(e)}")
+                        if hasattr(e, '__cause__'):
+                            logger.error(f"Underlying cause: {repr(e.__cause__)}")
+                        
+                        if attempt < max_retries - 1:
+                            wait_time = retry_delay * (attempt + 1)
+                            logger.info(f"Waiting {wait_time} seconds before retry...")
+                            time.sleep(wait_time)
+                        else:
+                            logger.error(f"All attempts failed after {max_retries} tries")
+                            raise last_error
+                
+                result = json.loads(response.choices[0].message.content)
             
             if dictionary_results:
                 result['dictionary_matches'] = dictionary_results
