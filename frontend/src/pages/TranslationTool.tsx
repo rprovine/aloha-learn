@@ -79,10 +79,23 @@ const TranslationTool: React.FC = () => {
       };
 
       const response = await api.post('/translation/translate', request);
+      
       setTranslationData(response.data);
       setTranslatedText(response.data.translation);
     } catch (err: any) {
-      setError(err.response?.data?.detail || 'Translation failed. Please try again.');
+      // Handle different error types
+      if (err.response?.status === 503) {
+        setError('Translation service is temporarily unavailable. Please try again later.');
+      } else if (err.response?.status === 422) {
+        setError('Invalid request. Please check your input.');
+      } else if (err.response?.data?.detail) {
+        setError(err.response.data.detail);
+      } else if (err.message) {
+        setError(err.message);
+      } else {
+        setError('Translation failed. Please try again.');
+      }
+      
       setTranslatedText('');
       setTranslationData(null);
     } finally {

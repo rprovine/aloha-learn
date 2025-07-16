@@ -4,14 +4,22 @@ from app.core.config import settings
 from app.models.translation import Dictionary
 from sqlalchemy.orm import Session
 import json
+import logging
 
-openai.api_key = settings.OPENAI_API_KEY
+# Configure logging
+logging.basicConfig(level=logging.INFO)
+logger = logging.getLogger(__name__)
 
 
 class TranslationService:
     def __init__(self, db: Session):
         self.db = db
-        self.client = openai.OpenAI(api_key=settings.OPENAI_API_KEY)
+        try:
+            self.client = openai.OpenAI(api_key=settings.OPENAI_API_KEY)
+            logger.info(f"OpenAI client initialized successfully")
+        except Exception as e:
+            logger.error(f"Failed to initialize OpenAI client: {e}")
+            raise
     
     async def translate(
         self,
@@ -61,14 +69,29 @@ Return JSON:
             
             return result
             
+        except openai.RateLimitError as e:
+            logger.error(f"OpenAI Rate Limit Error: {str(e)}")
+            return {
+                "translation": "Translation service is busy, please try again",
+                "error": "Rate limit reached",
+                "dictionary_matches": dictionary_results
+            }
+        except openai.AuthenticationError as e:
+            logger.error(f"OpenAI Authentication Error: {str(e)}")
+            return {
+                "translation": "Translation service configuration error",
+                "error": "Authentication failed",
+                "dictionary_matches": dictionary_results
+            }
         except Exception as e:
-            # Log the error for debugging
-            print(f"OpenAI Translation Error: {str(e)}")
-            print(f"Error type: {type(e)}")
+            logger.error(f"OpenAI Translation Error: {str(e)}")
+            logger.error(f"Error type: {type(e).__name__}")
+            logger.error(f"Full error details: {repr(e)}")
             # Fallback to basic translation
             return {
                 "translation": "Translation temporarily unavailable",
                 "error": str(e),
+                "error_type": type(e).__name__,
                 "dictionary_matches": dictionary_results
             }
     
@@ -117,12 +140,28 @@ Format your response as JSON:
             
             return result
             
+        except openai.RateLimitError as e:
+            logger.error(f"OpenAI Rate Limit Error: {str(e)}")
+            return {
+                "translation": "Translation service is busy, please try again",
+                "error": "Rate limit reached",
+                "dictionary_matches": dictionary_results
+            }
+        except openai.AuthenticationError as e:
+            logger.error(f"OpenAI Authentication Error: {str(e)}")
+            return {
+                "translation": "Translation service configuration error",
+                "error": "Authentication failed",
+                "dictionary_matches": dictionary_results
+            }
         except Exception as e:
-            print(f"OpenAI English Translation Error: {str(e)}")
-            print(f"Error type: {type(e)}")
+            logger.error(f"OpenAI English Translation Error: {str(e)}")
+            logger.error(f"Error type: {type(e).__name__}")
+            logger.error(f"Full error details: {repr(e)}")
             return {
                 "translation": "Translation temporarily unavailable",
                 "error": str(e),
+                "error_type": type(e).__name__,
                 "dictionary_matches": dictionary_results
             }
     

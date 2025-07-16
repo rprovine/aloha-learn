@@ -37,6 +37,15 @@ async def translate(
         include_cultural_context=request.include_cultural_context
     )
     
+    # Check if translation failed
+    if result.get('translation') == 'Translation temporarily unavailable':
+        error_message = result.get('error', 'Translation service error')
+        error_type = result.get('error_type', 'Unknown')
+        raise HTTPException(
+            status_code=503,
+            detail=f"{error_message} (Error type: {error_type})"
+        )
+    
     # Save to history if user is authenticated
     if current_user:
         translation_record = Translation(

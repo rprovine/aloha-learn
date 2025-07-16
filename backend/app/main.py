@@ -15,6 +15,11 @@ app = FastAPI(
 
 # Configure CORS
 origins = settings.ALLOWED_ORIGINS.split(",")
+# Add additional allowed origins
+origins.extend([
+    "http://localhost:8080",  # For testing
+    "file://",  # For local file testing
+])
 # Add Render URLs in production
 if settings.DEBUG is False:
     origins.extend([
@@ -24,7 +29,7 @@ if settings.DEBUG is False:
 
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=origins,
+    allow_origins=["*"],  # Allow all origins for debugging
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
