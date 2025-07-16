@@ -17,18 +17,27 @@ import { getPhoneticPronunciation, getPronunciationTips } from '../services/pron
 const LessonPage: React.FC = () => {
   const { id } = useParams();
   const navigate = useNavigate();
+  
+  // Parse lessonId early to use in state initialization
+  const lessonId = parseInt(id || '1');
+  
+  // Reset slide to 0 whenever lessonId changes
   const [currentSlide, setCurrentSlide] = useState(0);
   const [selectedAnswer, setSelectedAnswer] = useState<number | null>(null);
   const [showFeedback, setShowFeedback] = useState(false);
   const [lessonScore, setLessonScore] = useState(0);
 
-  console.log('LessonPage rendering with id:', id);
-
-  const lessonId = parseInt(id || '1');
+  console.log('LessonPage rendering with id:', id, 'lessonId:', lessonId);
   const lessonContent = getLessonContent(lessonId);
   const lessonInfo = curriculum.find(lesson => lesson.id === lessonId);
 
-  console.log('Lesson data:', { lessonId, hasContent: !!lessonContent, hasInfo: !!lessonInfo });
+  console.log('Lesson data:', { 
+    lessonId, 
+    hasContent: !!lessonContent, 
+    hasInfo: !!lessonInfo,
+    slideCount: lessonContent?.slides?.length || 0,
+    currentSlide 
+  });
 
   useEffect(() => {
     console.log('useEffect triggered for lessonId:', lessonId);
@@ -132,7 +141,7 @@ const LessonPage: React.FC = () => {
   
   // Ensure slide exists
   if (!slide) {
-    console.error('No slide at index:', currentSlide, 'in lesson:', lessonId);
+    console.error('No slide at index:', currentSlide, 'in lesson:', lessonId, 'Total slides:', lessonContent.slides.length);
     return (
       <div className="min-h-screen bg-gray-50 py-8">
         <div className="container mx-auto px-4 max-w-3xl">
@@ -188,7 +197,7 @@ const LessonPage: React.FC = () => {
 
         {/* Slide Content */}
         <motion.div
-          key={`${lessonId}-${currentSlide}`}
+          key={`lesson-${lessonId}-slide-${currentSlide}`}
           initial={{ opacity: 0, x: 20 }}
           animate={{ opacity: 1, x: 0 }}
           className="card min-h-[400px] flex flex-col"
