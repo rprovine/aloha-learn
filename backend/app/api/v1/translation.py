@@ -24,8 +24,57 @@ async def translate(
     request: TranslationRequest
 ):
     import logging
+    import json
     logger = logging.getLogger(__name__)
 
+    # Simple direct implementation for Render
+    if os.getenv("RENDER"):
+        try:
+            from app.services.openai_direct import get_direct_client
+
+            logger.info(f"Translation request on Render: {request.text[:50]}...")
+
+            # Prepare prompt based on direction
+            if request.source_language == "en" and request.target_language == "haw":
+                prompt = f"""Translate to Hawaiian: "{request.text}"
+Return JSON:
+{{
+  "translation": "Hawaiian translation",
+  "word_breakdown": [{{"hawaiian": "word", "english": "meaning"}}],
+  "cultural_context": "Brief cultural note",
+  "pronunciation_guide": "Simple pronunciation"
+}}"""
+            elif request.source_language == "haw" and request.target_language == "en":
+                prompt = f"""Translate from Hawaiian to English: "{request.text}"
+Return JSON:
+{{
+  "translation": "English translation",
+  "word_breakdown": [{{"hawaiian": "word", "english": "meaning"}}],
+  "cultural_context": "Brief cultural note"
+}}"""
+            else:
+                raise HTTPException(status_code=400, detail="Only English-Hawaiian translations supported")
+
+            client = get_direct_client()
+            response = await client.chat_completion(
+                messages=[
+                    {"role": "system", "content": "Hawaiian translator. Return JSON only."},
+                    {"role": "user", "content": prompt}
+                ],
+                temperature=0.3,
+                response_format={"type": "json_object"}
+            )
+
+            result = json.loads(response['choices'][0]['message']['content'])
+            logger.info("Translation completed successfully on Render")
+
+            return TranslationResponse(**result)
+
+        except Exception as e:
+            logger.error(f"Render translation error: {type(e).__name__}: {str(e)}")
+            raise HTTPException(status_code=500, detail=str(e))
+
+    # Original implementation for local development
     db = None
     try:
         # Try to get database session, but don't fail if it's not available
@@ -43,27 +92,19 @@ async def translate(
 
         logger.info(f"Translation request: {request.text[:50]}... (mock={use_mock})")
 
-        try:
-            if use_mock:
-                from app.services.mock_translation import MockTranslationService
-                service = MockTranslationService(db)
-            else:
-                logger.info("Initializing TranslationService...")
-                service = TranslationService(db)
-                logger.info("TranslationService initialized successfully")
-        except Exception as init_error:
-            logger.error(f"Failed to initialize translation service: {init_error}")
-            raise
+        if use_mock:
+            from app.services.mock_translation import MockTranslationService
+            service = MockTranslationService(db)
+        else:
+            service = TranslationService(db)
 
         # Perform translation
-        logger.info("Calling service.translate()...")
         result = await service.translate(
             text=request.text,
             source_lang=request.source_language,
             target_lang=request.target_language,
             include_cultural_context=request.include_cultural_context
         )
-        logger.info("Translation completed successfully")
     except Exception as e:
         logger.error(f"Translation error: {type(e).__name__}: {str(e)}")
         import traceback
