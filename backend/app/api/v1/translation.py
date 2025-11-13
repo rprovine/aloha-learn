@@ -43,19 +43,27 @@ async def translate(
 
         logger.info(f"Translation request: {request.text[:50]}... (mock={use_mock})")
 
-        if use_mock:
-            from app.services.mock_translation import MockTranslationService
-            service = MockTranslationService(db)
-        else:
-            service = TranslationService(db)
+        try:
+            if use_mock:
+                from app.services.mock_translation import MockTranslationService
+                service = MockTranslationService(db)
+            else:
+                logger.info("Initializing TranslationService...")
+                service = TranslationService(db)
+                logger.info("TranslationService initialized successfully")
+        except Exception as init_error:
+            logger.error(f"Failed to initialize translation service: {init_error}")
+            raise
 
         # Perform translation
+        logger.info("Calling service.translate()...")
         result = await service.translate(
             text=request.text,
             source_lang=request.source_language,
             target_lang=request.target_language,
             include_cultural_context=request.include_cultural_context
         )
+        logger.info("Translation completed successfully")
     except Exception as e:
         logger.error(f"Translation error: {type(e).__name__}: {str(e)}")
         import traceback

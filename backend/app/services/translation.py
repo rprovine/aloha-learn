@@ -17,34 +17,29 @@ logger = logging.getLogger(__name__)
 class TranslationService:
     def __init__(self, db: Session):
         self.db = db
-        try:
-            # Get timeout from environment or use default
-            timeout = float(os.getenv("OPENAI_TIMEOUT", "60.0"))
-            logger.info(f"Initializing OpenAI client with {timeout}s timeout")
-            
-            # Check if we're on Render
-            # Clean the API key
-            clean_api_key = settings.OPENAI_API_KEY.strip()
-            
-            if os.getenv("RENDER"):
-                logger.info("Detected Render environment, using custom HTTP client")
-                from app.core.openai_config import get_http_client
-                self.client = openai.OpenAI(
-                    api_key=clean_api_key,
-                    timeout=timeout,
-                    max_retries=3,
-                    http_client=get_http_client()
-                )
-            else:
+        self.use_render_client = os.getenv("RENDER") is not None
+
+        if not self.use_render_client:
+            try:
+                # Get timeout from environment or use default
+                timeout = float(os.getenv("OPENAI_TIMEOUT", "60.0"))
+                logger.info(f"Initializing OpenAI client with {timeout}s timeout")
+
+                # Clean the API key
+                clean_api_key = settings.OPENAI_API_KEY.strip()
+
                 self.client = openai.OpenAI(
                     api_key=clean_api_key,
                     timeout=timeout,
                     max_retries=3
                 )
-            logger.info(f"OpenAI client initialized successfully")
-        except Exception as e:
-            logger.error(f"Failed to initialize OpenAI client: {e}")
-            raise
+                logger.info(f"OpenAI client initialized successfully")
+            except Exception as e:
+                logger.error(f"Failed to initialize OpenAI client: {e}")
+                raise
+        else:
+            logger.info("Using direct HTTP client for Render")
+            self.client = None  # Will use direct client instead
     
     async def translate(
         self,
@@ -77,7 +72,7 @@ Return JSON:
 
         try:
             # Use direct HTTP client on Render
-            if os.getenv("RENDER"):
+            if self.use_render_client:
                 logger.info("Using direct HTTP client for OpenAI API on Render")
                 from app.services.openai_direct import get_direct_client
                 
@@ -189,10 +184,10 @@ Format your response as JSON:
 
         try:
             # Use direct HTTP client on Render
-            if os.getenv("RENDER"):
+            if self.use_render_client:
                 logger.info("Using direct HTTP client for OpenAI API on Render")
                 from app.services.openai_direct import get_direct_client
-                
+
                 direct_client = get_direct_client()
                 response = await direct_client.chat_completion(
                     messages=[
