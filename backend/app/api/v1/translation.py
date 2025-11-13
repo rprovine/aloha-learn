@@ -61,12 +61,14 @@ async def translate(
         import traceback
         tb = traceback.format_exc()
         logger.error(f"Traceback: {tb}")
+
+        # Get the last few lines of traceback for debugging
+        tb_lines = tb.split('\n')
+        short_tb = '\n'.join(tb_lines[-5:])
+
         raise HTTPException(
             status_code=500,
-            detail={
-                "error": f"{type(e).__name__}: {str(e)}",
-                "traceback": tb.split('\n')[-10:]  # Last 10 lines
-            }
+            detail=f"{type(e).__name__}: {str(e)}\n\nTraceback:\n{short_tb}"
         )
     finally:
         if db:
