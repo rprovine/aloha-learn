@@ -7,6 +7,13 @@ import logging
 
 logger = logging.getLogger(__name__)
 
+# Import all models so SQLAlchemy knows about them
+try:
+    from app.models import user, lesson, translation as translation_model, progress
+    logger.info("Models imported successfully")
+except Exception as e:
+    logger.error(f"Failed to import models: {e}")
+
 # Wait for database to be available and create tables
 try:
     logger.info("Waiting for database connection...")
