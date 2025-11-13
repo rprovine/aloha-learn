@@ -21,7 +21,7 @@ class DirectOpenAIClient:
             "Content-Type": "application/json"
         }
     
-    async def chat_completion(self, messages: List[Dict], model: str = "gpt-3.5-turbo-0125", 
+    async def chat_completion(self, messages: List[Dict], model: str = "gpt-4o-mini", 
                             temperature: float = 0.3, max_tokens: int = None,
                             response_format: Dict = None) -> Dict:
         """Make a chat completion request using direct HTTP"""

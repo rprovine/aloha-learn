@@ -101,7 +101,7 @@ Return JSON:
                 for attempt in range(max_retries):
                     try:
                         response = self.client.chat.completions.create(
-                            model="gpt-3.5-turbo-0125",
+                            model="gpt-4o-mini",
                             messages=[
                                 {"role": "system", "content": "Hawaiian translator. Return JSON only."},
                                 {"role": "user", "content": prompt}
@@ -213,7 +213,7 @@ Format your response as JSON:
                 for attempt in range(max_retries):
                     try:
                         response = self.client.chat.completions.create(
-                            model="gpt-3.5-turbo-0125",
+                            model="gpt-4o-mini",
                             messages=[
                                 {"role": "system", "content": "You are a Hawaiian language expert focused on preserving cultural nuance in translations."},
                                 {"role": "user", "content": prompt}
@@ -272,28 +272,35 @@ Format your response as JSON:
     
     def _check_dictionary(self, text: str, source_lang: str) -> List[Dict]:
         # Simple word lookup in dictionary
+        if not self.db:
+            logger.warning("Database not available, skipping dictionary lookup")
+            return []
+
         words = text.lower().split()
         matches = []
-        
-        for word in words:
-            if source_lang == 'en':
-                entry = self.db.query(Dictionary).filter(
-                    Dictionary.english_translation.ilike(f'%{word}%')
-                ).first()
-            else:
-                entry = self.db.query(Dictionary).filter(
-                    Dictionary.hawaiian_word.ilike(f'%{word}%')
-                ).first()
-            
-            if entry:
-                matches.append({
-                    'word': word,
-                    'hawaiian': entry.hawaiian_word,
-                    'english': entry.english_translation,
-                    'part_of_speech': entry.part_of_speech,
-                    'cultural_notes': entry.cultural_notes
-                })
-        
+
+        try:
+            for word in words:
+                if source_lang == 'en':
+                    entry = self.db.query(Dictionary).filter(
+                        Dictionary.english_translation.ilike(f'%{word}%')
+                    ).first()
+                else:
+                    entry = self.db.query(Dictionary).filter(
+                        Dictionary.hawaiian_word.ilike(f'%{word}%')
+                    ).first()
+
+                if entry:
+                    matches.append({
+                        'word': word,
+                        'hawaiian': entry.hawaiian_word,
+                        'english': entry.english_translation,
+                        'part_of_speech': entry.part_of_speech,
+                        'cultural_notes': entry.cultural_notes
+                    })
+        except Exception as e:
+            logger.warning(f"Dictionary lookup failed: {str(e)}")
+
         return matches
     
     async def get_word_of_the_day(self) -> Dict:

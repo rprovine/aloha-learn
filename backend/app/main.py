@@ -69,10 +69,19 @@ def read_root():
 @app.get("/health")
 def health_check():
     import os
-    from app.db.base import engine
+    from app.db.base import engine, database_url
     from sqlalchemy import text
 
     health_status = {"status": "healthy"}
+
+    # Show masked database URL for debugging
+    if database_url:
+        # Mask password in URL
+        import re
+        masked_url = re.sub(r'://([^:]+):([^@]+)@', r'://\1:****@', database_url)
+        health_status["database_url"] = masked_url
+    else:
+        health_status["database_url"] = "not configured"
 
     # Check database connection
     try:

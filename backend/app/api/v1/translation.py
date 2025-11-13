@@ -21,13 +21,22 @@ router = APIRouter()
 
 @router.post("/translate", response_model=TranslationResponse)
 async def translate(
-    request: TranslationRequest,
-    db: Session = Depends(get_db)
+    request: TranslationRequest
 ):
     import logging
     logger = logging.getLogger(__name__)
 
+    db = None
     try:
+        # Try to get database session, but don't fail if it's not available
+        try:
+            from app.db.base import SessionLocal
+            db = SessionLocal()
+            logger.info("Database session created successfully")
+        except Exception as db_error:
+            logger.warning(f"Database not available: {str(db_error)[:100]}")
+            # Continue without database - translation can work without it
+
         # For now, allow anonymous translations
         current_user = None
 
@@ -58,6 +67,12 @@ async def translate(
             status_code=500,
             detail=f"Translation service error: {type(e).__name__}: {str(e)}"
         )
+    finally:
+        if db:
+            try:
+                db.close()
+            except:
+                pass
     
     # Check if translation failed
     if result.get('translation') == 'Translation temporarily unavailable':
