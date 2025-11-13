@@ -188,6 +188,39 @@ async def test_network():
     
     return results
 
+@app.get("/test-translation-simple")
+async def test_translation_simple():
+    """Simple translation test without database"""
+    try:
+        from app.services.openai_direct import get_direct_client
+        import os
+
+        if not os.getenv("RENDER"):
+            return {"error": "This endpoint only works on Render"}
+
+        client = get_direct_client()
+        response = await client.chat_completion(
+            messages=[
+                {"role": "system", "content": "Hawaiian translator. Return JSON only."},
+                {"role": "user", "content": 'Translate to Hawaiian: "hello". Return JSON: {"translation": "Hawaiian translation"}'}
+            ],
+            temperature=0.3,
+            response_format={"type": "json_object"}
+        )
+
+        return {
+            "success": True,
+            "response": response['choices'][0]['message']['content']
+        }
+    except Exception as e:
+        import traceback
+        return {
+            "success": False,
+            "error": str(e),
+            "error_type": type(e).__name__,
+            "traceback": traceback.format_exc()
+        }
+
 @app.get("/test-direct")
 async def test_direct_client():
     """Test the direct HTTP client"""

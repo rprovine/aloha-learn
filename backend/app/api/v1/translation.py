@@ -57,12 +57,16 @@ async def translate(
             include_cultural_context=request.include_cultural_context
         )
     except Exception as e:
-        logger.error(f"Translation service initialization error: {type(e).__name__}: {str(e)}")
+        logger.error(f"Translation error: {type(e).__name__}: {str(e)}")
         import traceback
-        logger.error(f"Traceback: {traceback.format_exc()}")
+        tb = traceback.format_exc()
+        logger.error(f"Traceback: {tb}")
         raise HTTPException(
             status_code=500,
-            detail=f"Translation service error: {type(e).__name__}: {str(e)}"
+            detail={
+                "error": f"{type(e).__name__}: {str(e)}",
+                "traceback": tb.split('\n')[-10:]  # Last 10 lines
+            }
         )
     finally:
         if db:
