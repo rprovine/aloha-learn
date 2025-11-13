@@ -28,24 +28,20 @@ async def translate(
 
     db = None
     try:
-        # For now, allow anonymous translations - skip database entirely on Render
-        skip_db = os.getenv("RENDER") is not None
-
-        if not skip_db:
-            # Try to get database session, but don't fail if it's not available
-            try:
-                from app.db.base import SessionLocal
-                db = SessionLocal()
-                logger.info("Database session created successfully")
-            except Exception as db_error:
-                logger.warning(f"Database not available: {str(db_error)[:100]}")
-                # Continue without database - translation can work without it
+        # Try to get database session, but don't fail if it's not available
+        try:
+            from app.db.base import SessionLocal
+            db = SessionLocal()
+            logger.info("Database session created successfully")
+        except Exception as db_error:
+            logger.warning(f"Database not available: {str(db_error)[:100]}")
+            # Continue without database - translation can work without it
 
         # Initialize translation service
         # Use mock service if OpenAI is having issues or for testing
         use_mock = os.getenv("USE_MOCK_TRANSLATION", "false").lower() == "true"
 
-        logger.info(f"Translation request: {request.text[:50]}... (mock={use_mock}, skip_db={skip_db})")
+        logger.info(f"Translation request: {request.text[:50]}... (mock={use_mock})")
 
         if use_mock:
             from app.services.mock_translation import MockTranslationService
