@@ -221,6 +221,39 @@ async def test_translation_simple():
             "traceback": traceback.format_exc()
         }
 
+@app.get("/test-translation-service")
+async def test_translation_service():
+    """Test the TranslationService directly"""
+    try:
+        from app.services.translation import TranslationService
+        import os
+
+        if not os.getenv("RENDER"):
+            return {"error": "This endpoint only works on Render"}
+
+        # Initialize without database
+        service = TranslationService(None)
+
+        result = await service.translate(
+            text="hello",
+            source_lang="en",
+            target_lang="haw",
+            include_cultural_context=True
+        )
+
+        return {
+            "success": True,
+            "result": result
+        }
+    except Exception as e:
+        import traceback
+        return {
+            "success": False,
+            "error": str(e),
+            "error_type": type(e).__name__,
+            "traceback": traceback.format_exc()
+        }
+
 @app.get("/test-direct")
 async def test_direct_client():
     """Test the direct HTTP client"""
