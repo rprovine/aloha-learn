@@ -38,41 +38,54 @@ def register(
     user_data: UserCreate,
     db: Session = Depends(get_db)
 ):
-    # Check if user exists
-    db_user = db.query(UserModel).filter(
-        (UserModel.email == user_data.email) | 
-        (UserModel.username == user_data.username)
-    ).first()
-    
-    if db_user:
-        if db_user.email == user_data.email:
-            raise HTTPException(
-                status_code=400,
-                detail="Email already registered"
-            )
-        else:
-            raise HTTPException(
-                status_code=400,
-                detail="Username already taken"
-            )
-    
-    # Create new user
-    hashed_password = get_password_hash(user_data.password)
-    db_user = UserModel(
-        email=user_data.email,
-        username=user_data.username,
-        full_name=user_data.full_name,
-        hashed_password=hashed_password,
-        preferred_language=user_data.preferred_language,
-        learning_level=user_data.learning_level,
-        daily_goal_minutes=user_data.daily_goal_minutes
-    )
-    
-    db.add(db_user)
-    db.commit()
-    db.refresh(db_user)
-    
-    return db_user
+    try:
+        # Check if user exists
+        db_user = db.query(UserModel).filter(
+            (UserModel.email == user_data.email) |
+            (UserModel.username == user_data.username)
+        ).first()
+
+        if db_user:
+            if db_user.email == user_data.email:
+                raise HTTPException(
+                    status_code=400,
+                    detail="Email already registered"
+                )
+            else:
+                raise HTTPException(
+                    status_code=400,
+                    detail="Username already taken"
+                )
+
+        # Create new user
+        hashed_password = get_password_hash(user_data.password)
+        db_user = UserModel(
+            email=user_data.email,
+            username=user_data.username,
+            full_name=user_data.full_name,
+            hashed_password=hashed_password,
+            preferred_language=user_data.preferred_language,
+            learning_level=user_data.learning_level,
+            daily_goal_minutes=user_data.daily_goal_minutes
+        )
+
+        db.add(db_user)
+        db.commit()
+        db.refresh(db_user)
+
+        logger.info(f"User registered successfully: {db_user.username}")
+        return db_user
+
+    except HTTPException:
+        # Re-raise HTTP exceptions (validation errors)
+        raise
+    except Exception as e:
+        logger.error(f"Registration error: {type(e).__name__}: {str(e)}")
+        db.rollback()
+        raise HTTPException(
+            status_code=500,
+            detail=f"Registration failed: {str(e)}"
+        )
 
 
 @router.post("/login", response_model=Token)
