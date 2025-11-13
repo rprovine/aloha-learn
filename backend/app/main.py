@@ -2,10 +2,22 @@ from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from app.core.config import settings
 from app.api.v1 import auth, translation, pronunciation
-from app.db.base import engine, Base
+from app.db.base import engine, Base, wait_for_db
+import logging
 
-# Create database tables
-Base.metadata.create_all(bind=engine)
+logger = logging.getLogger(__name__)
+
+# Wait for database to be available and create tables
+try:
+    logger.info("Waiting for database connection...")
+    wait_for_db(max_retries=10, delay=3)
+    logger.info("Creating database tables...")
+    Base.metadata.create_all(bind=engine)
+    logger.info("Database tables created successfully")
+except Exception as e:
+    logger.error(f"Failed to initialize database: {e}")
+    # Don't fail the application startup, let it try to connect later
+    logger.warning("Application starting without database initialization")
 
 app = FastAPI(
     title=settings.APP_NAME,
