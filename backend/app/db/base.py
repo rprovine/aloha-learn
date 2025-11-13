@@ -14,21 +14,28 @@ if database_url.startswith("postgres://"):
     database_url = database_url.replace("postgres://", "postgresql://", 1)
 
 # Create engine with connection pooling settings
-engine = create_engine(
-    database_url,
-    echo=settings.DATABASE_ECHO,
-    pool_pre_ping=True,
-    pool_recycle=300,  # Recycle connections after 5 minutes
-    pool_size=5,
-    max_overflow=10,
-    connect_args={
-        "connect_timeout": 10,
-        "keepalives": 1,
-        "keepalives_idle": 30,
-        "keepalives_interval": 10,
-        "keepalives_count": 5,
-    } if "postgresql" in database_url else {}
-)
+try:
+    engine = create_engine(
+        database_url,
+        echo=settings.DATABASE_ECHO,
+        pool_pre_ping=True,
+        pool_recycle=300,  # Recycle connections after 5 minutes
+        pool_size=5,
+        max_overflow=10,
+        connect_args={
+            "connect_timeout": 10,
+            "keepalives": 1,
+            "keepalives_idle": 30,
+            "keepalives_interval": 10,
+            "keepalives_count": 5,
+        } if "postgresql" in database_url else {}
+    )
+    logger.info(f"Database engine created for {database_url.split('@')[-1] if '@' in database_url else 'sqlite'}")
+except Exception as e:
+    logger.error(f"Failed to create database engine: {e}")
+    logger.warning("Falling back to in-memory SQLite database")
+    database_url = "sqlite:///:memory:"
+    engine = create_engine(database_url, echo=settings.DATABASE_ECHO)
 
 SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
 
