@@ -58,7 +58,12 @@ def register(
                 )
 
         # Create new user
-        hashed_password = get_password_hash(user_data.password)
+        # Ensure password doesn't exceed bcrypt's 72-byte limit
+        password = user_data.password
+        if len(password.encode('utf-8')) > 72:
+            password = password.encode('utf-8')[:72].decode('utf-8', errors='ignore')
+
+        hashed_password = get_password_hash(password)
         db_user = UserModel(
             email=user_data.email,
             username=user_data.username,
