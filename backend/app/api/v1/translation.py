@@ -24,26 +24,40 @@ async def translate(
     request: TranslationRequest,
     db: Session = Depends(get_db)
 ):
-    # For now, allow anonymous translations
-    current_user = None
-    
-    # Initialize translation service
-    # Use mock service if OpenAI is having issues or for testing
-    use_mock = os.getenv("USE_MOCK_TRANSLATION", "false").lower() == "true"
-    
-    if use_mock:
-        from app.services.mock_translation import MockTranslationService
-        service = MockTranslationService(db)
-    else:
-        service = TranslationService(db)
-    
-    # Perform translation
-    result = await service.translate(
-        text=request.text,
-        source_lang=request.source_language,
-        target_lang=request.target_language,
-        include_cultural_context=request.include_cultural_context
-    )
+    import logging
+    logger = logging.getLogger(__name__)
+
+    try:
+        # For now, allow anonymous translations
+        current_user = None
+
+        # Initialize translation service
+        # Use mock service if OpenAI is having issues or for testing
+        use_mock = os.getenv("USE_MOCK_TRANSLATION", "false").lower() == "true"
+
+        logger.info(f"Translation request: {request.text[:50]}... (mock={use_mock})")
+
+        if use_mock:
+            from app.services.mock_translation import MockTranslationService
+            service = MockTranslationService(db)
+        else:
+            service = TranslationService(db)
+
+        # Perform translation
+        result = await service.translate(
+            text=request.text,
+            source_lang=request.source_language,
+            target_lang=request.target_language,
+            include_cultural_context=request.include_cultural_context
+        )
+    except Exception as e:
+        logger.error(f"Translation service initialization error: {type(e).__name__}: {str(e)}")
+        import traceback
+        logger.error(f"Traceback: {traceback.format_exc()}")
+        raise HTTPException(
+            status_code=500,
+            detail=f"Translation service error: {type(e).__name__}: {str(e)}"
+        )
     
     # Check if translation failed
     if result.get('translation') == 'Translation temporarily unavailable':

@@ -68,7 +68,30 @@ def read_root():
 
 @app.get("/health")
 def health_check():
-    return {"status": "healthy"}
+    import os
+    from app.db.base import engine
+    from sqlalchemy import text
+
+    health_status = {"status": "healthy"}
+
+    # Check database connection
+    try:
+        with engine.connect() as conn:
+            conn.execute(text("SELECT 1"))
+        health_status["database"] = "connected"
+    except Exception as e:
+        health_status["database"] = f"error: {str(e)[:100]}"
+        health_status["status"] = "unhealthy"
+
+    # Check OpenAI API key
+    api_key = os.getenv("OPENAI_API_KEY", "")
+    if api_key:
+        health_status["openai_key"] = f"configured ({len(api_key)} chars)"
+    else:
+        health_status["openai_key"] = "not configured"
+        health_status["status"] = "degraded"
+
+    return health_status
 
 @app.get("/test-network")
 async def test_network():
